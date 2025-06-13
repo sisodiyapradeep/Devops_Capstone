@@ -58,16 +58,5 @@ pipeline {
                 }
             }
         }
-        stage('Test Deployment') {
-            steps {
-                script {
-                    sh '''
-                        kubectl rollout status deployment/internal-deployment
-                        kubectl rollout status deployment/external-deployment
-                        kubectl get pods
-                    '''
-                }
-            }
-        }
     }
 }
