@@ -1,3 +1,128 @@
+
+# Sample App for adding event
+
+This is a simple app that allows users to add event, comment and like. External App defines the frontend and Internal app defines the backend.
+
+
+## Building and deploying the App manually
+
+The steps below will guide you through building and deploying the App manually using Docker and Kubernetes and Jenkins Pipeline.
+
+### Infrastructure Setup
+
+Deploy the EKS cluster using `eksctl`. This is going to take a while, so you can continue with the next steps.
+
+```bash
+eksctl create cluster -f cluster.yaml
+```
+
+Create two ECR repositories in your AWS account:
+
+```bash
+aws ecr create-repository --repository-name external
+aws ecr create-repository --repository-name internal
+EXTERNAL_IMAGE = '933199133172.dkr.ecr.us-east-1.amazonaws.com/external
+INTERNAL_IMAGE = '933199133172.dkr.ecr.us-east-1.amazonaws.com/internal'
+```
+
+### Application Build
+
+Build the backend image and push to ECR,
+
+```bash
+cd internal
+docker build -t ${INTERNAL_IMAGE}:${IMAGE_TAG} .
+docker push ${INTERNAL_IMAGE}:${IMAGE_TAG}
+```
+
+Build the frontend image and push to ECR,
+
+```bash
+cd external
+docker build -t ${EXTERNAL_IMAGE}:${IMAGE_TAG} .
+docker push ${EXTERNAL_IMAGE}:${IMAGE_TAG}
+```
+
+### Running the application locally with Docker
+
+To run the application locally using Docker, ensure you have Docker installed and then execute the following command:
+
+```bash
+docker run -d -p 8080:8080
+```
+
+### Deploy the Application as pods on kubernetes cluster (Manually/Not using pipeline)
+
+Make sure the EKS cluster is up and running, then deploy the application using Kubernetes manifests.
+
+Create a namespace for the application:
+
+```bash
+cd kubernestes
+NAMESPACE=devops
+kubectl create namespace $NAMESPACE
+kubectl config set-context --current --namespace=$NAMESPACE
+```
+
+Deploy the application:
+
+```bash
+ cd kubernetes
+ kubectl config set-context --current --namespace=$NAMESPACE
+ kubectl apply -f ./kubernetes/internal-deployment.yaml
+ kubectl apply -f ./kubernetes/external-deployment.yaml
+ kubectl apply -f ./kubernetes/internal-service.yaml
+ kubectl apply -f ./kubernetes/external-service.yaml
+```
+
+You can check the status of deployement, services,and pods using:
+
+```bash
+kubectl get all
+```
+
+Check the loadbalancer service to get the external IP:
+
+### Accessing the Application
+
+Access the frontend at the external IP address provided by the LoadBalancer service.
+
+### Cleanup
+
+To clean up the resources created during this setup, you can delete the namespace and the EKS cluster:
+
+```bash
+kubectl delete namespace $NAMESPACE
+kubectl delete namespace devops
+eksctl delete cluster -f cluster.yaml
+```
+
+## Deploy with Jenkins
+
+To deploy the sample event App using Jenkins, follow these steps:
+
+1. **Set up Jenkins**: Ensure you have a Jenkins server running and configured with the necessary plugins for Terraform and Kubernetes.
+2. **Create a Jenkins Pipeline**: Create a Jenkins pipeline that will:
+   - Clone the repository containing the sample event App code.
+   - Use cluster.yaml to provision the EKS cluster and deploy the application.
+   - Build and push Docker images to ECR.
+   - Apply Kubernetes manifests to deploy the application.
+   - **Configure Jenkins Credentials**: Ensure that Jenkins has the necessary AWS credentials and permissions to interact with EKS and ECR
+   - **Configure Jenkins Environment Variables**: Set environment variables for the ECR repository URIs and other necessary configurations.
+   - **Trigger the Pipeline**: Run the Jenkins pipeline to deploy the Sample event App.
+
+Following is a sample Jenkins pipeline view,
+
+![Jenkin Pipelines](./documentation/jenkins-pipelines.png)
+
+Following is a sample execution of the Jenkins pipeline,
+
+![Jenkins Execution](./documentation/jenkins-execution.png)
+
+### Notes
+
+1. A sample Jenkinsfile is provided in the repository to help you get started with the pipeline configuration.
+2. A sample Terraform configuration is also provided to set up the EKS cluster.
 # events-sample-node
  
 1. Getting started:  
