@@ -50,10 +50,10 @@ pipeline {
                         kubectl get nodes
                         kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
                         kubectl config set-context --current --namespace=$NAMESPACE
-                        kubectl apply -f internal-deployment.yaml
-                        kubectl apply -f external-deployment.yaml
-                        kubectl apply -f internal-service.yaml
-                        kubectl apply -f external-service.yaml
+                        kubectl apply -f ./kubernetes/internal-deployment.yaml
+                        kubectl apply -f ./kubernetes/external-deployment.yaml
+                        kubectl apply -f ./kubernetes/internal-service.yaml
+                        kubectl apply -f ./kubernetes/external-service.yaml
                     '''
                 }
             }
